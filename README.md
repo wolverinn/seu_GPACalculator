@@ -1,5 +1,5 @@
 ﻿# seu_GPACalculator
-automatically log in and calculate GPA for students in southeast university 
+automatically log in and calculate GPA for students in southeast university   
 计算除选修课的课程的平均绩点 
 - 用法：  
 1. 下载.exe程序直接运行  
