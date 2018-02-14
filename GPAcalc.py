@@ -52,6 +52,7 @@ gpapage=ses.get(url2)
 if gpapage.url=="http://xk.urp.seu.edu.cn/studentService/cs/stuServe/studentExamResultQuery.action":pass
 else:
     print("登录失败，检查用户名，密码和验证码")
+	os.system("pause")
     exit(1)
 #获取学分和成绩
 soup=BeautifulSoup(gpapage.text,'lxml')
