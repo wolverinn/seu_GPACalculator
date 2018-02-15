@@ -17,6 +17,10 @@ password=input("输入统一身份认证密码：")
 #下载验证码图片并手动读取,使用session保持cookie
 ses=requests.Session()
 image=ses.get(imgurl)
+if image.status_code !=200:
+    print("检查网络连接")
+    os.system("pause")
+    exit(1)
 f = open('code.jpg','wb')
 f.write(image.content)
 f.close()
