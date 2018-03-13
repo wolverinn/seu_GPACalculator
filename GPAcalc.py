@@ -1,6 +1,9 @@
 import requests
 import os
 from bs4 import BeautifulSoup
+import re
+import pytesseract
+from PIL import Image
 
 url="http://xk.urp.seu.edu.cn/studentService/system/login.action"                                  #登录网址
 url2="http://xk.urp.seu.edu.cn/studentService/cs/stuServe/studentExamResultQuery.action"                   #成绩查询网址
@@ -11,54 +14,104 @@ credit=[]                       #记录学分
 scores=[]                       #记录成绩一栏
 scor=[]                         #将成绩换算成对应的绩点
 
-username=input("程序自动登陆时请将图片中的验证码输入程序\n输入一卡通号：")
+username=input("输入一卡通号：")
 password=input("输入统一身份认证密码：")
 
-#下载验证码图片并手动读取,使用session保持cookie
 ses=requests.Session()
-image=ses.get(imgurl)
-if image.status_code !=200:
-    print("检查网络连接")
-    os.system("pause")
-    exit(1)
-f = open('code.jpg','wb')
-f.write(image.content)
-f.close()
-os.system("code.jpg")
-vercode=input('输入验证码:')
+verify_ok="0"
 
-#构造提交的表单数据
-#貌似不需要提交headers
-# headers={
-#     'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-#     'Accept-Encoding':'gzip, deflate',
-#     'Accept-Language':'zh-CN,zh;q=0.9',
-#     'Cache-Control':'max-age=0',
-#     'Connection':'keep-alive',
-#     'Content-Type':'application/x-www-form-urlencoded',
-#     # 'Cookie':cookie,
-#     'Host':'xk.urp.seu.edu.cn',
-#     'Origin':'http://xk.urp.seu.edu.cn',
-#     'Referer':'http://xk.urp.seu.edu.cn/studentService/system/showLogin.action',
-#     'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
-# }
-data={
-    'userName':username,
-    'password':password,
-    'vercode':vercode,
-    'x':'16',                            #别管
-    'y':'7'                              #别管
-}
-#模拟登录
-# wb_data=ses.post(url,data=data,headers=headers)
-wb_data=ses.post(url,data=data)
-gpapage=ses.get(url2)
-if gpapage.url=="http://xk.urp.seu.edu.cn/studentService/cs/stuServe/studentExamResultQuery.action":pass
+#尝试自动识别验证码十次
+print("尝试自动登陆中，如自动登陆不成功请手动打开图片输入验证码...")
+for i in range(10):
+    image = ses.get(imgurl)
+    if image.status_code != 200:
+        print("检查网络连接")
+        os.system("pause")
+        exit(1)
+    f = open('code.jpg', 'wb')
+    f.write(image.content)
+    f.close()
+    img=Image.open("code.jpg")
+    img = img.convert('L')
+    img1 = img.crop((10, 0, 60, 100))
+    img2 = img.crop((55, 0, 105, 100))
+    img3 = img.crop((102, 0, 152, 100))
+    img4 = img.crop((150, 0, 200, 100))
+    img_list = [img1, img2, img3, img4]
+    img_num = ["0", "0", "0", "0"]
+    for i in range(0, 4):
+        a = pytesseract.image_to_string(img_list[i], lang="eng", config="-psm 10 digits")
+        if re.match('\d', a) and len(a) == 1:
+            img_num[i] = a
+        elif len(a) > 1 and re.match('\d', a):
+            img_num[i] = a[0]
+        else:
+            img_num[i] = "0"
+    vercode = img_num[0] + img_num[1] + img_num[2] + img_num[3]
+    data = {
+        'userName': username,
+        'password': password,
+        'vercode': vercode,
+        'x': '16',  # 别管
+        'y': '7'  # 别管
+    }
+    # 模拟登录
+    # wb_data=ses.post(url,data=data,headers=headers)
+    wb_data = ses.post(url, data=data)
+    gpapage = ses.get(url2)
+    if gpapage.url == "http://xk.urp.seu.edu.cn/studentService/cs/stuServe/studentExamResultQuery.action":
+        verify_ok="1"
+        break
+    else:
+        pass
+
+if verify_ok=="0":
+    image = ses.get(imgurl)
+    if image.status_code != 200:
+        print("检查网络连接")
+        os.system("pause")
+        exit(1)
+    f = open('code.jpg', 'wb')
+    f.write(image.content)
+    f.close()
+    os.system("code.jpg")
+    vercode = input('输入验证码:')
+    # 构造提交的表单数据
+    # 貌似不需要提交headers
+    # headers={
+    #     'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    #     'Accept-Encoding':'gzip, deflate',
+    #     'Accept-Language':'zh-CN,zh;q=0.9',
+    #     'Cache-Control':'max-age=0',
+    #     'Connection':'keep-alive',
+    #     'Content-Type':'application/x-www-form-urlencoded',
+    #     'Host':'xk.urp.seu.edu.cn',
+    #     'Origin':'http://xk.urp.seu.edu.cn',
+    #     'Referer':'http://xk.urp.seu.edu.cn/studentService/system/showLogin.action',
+    #     'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+    # }
+    data = {
+        'userName': username,
+        'password': password,
+        'vercode': vercode,
+        'x': '16',  # 别管
+        'y': '7'  # 别管
+    }
+    # 模拟登录
+    # wb_data=ses.post(url,data=data,headers=headers)
+    wb_data = ses.post(url, data=data)
+    gpapage = ses.get(url2)
+    if gpapage.url == "http://xk.urp.seu.edu.cn/studentService/cs/stuServe/studentExamResultQuery.action":
+        pass
+    else:
+        print("登录失败，检查用户名，密码和验证码")
+        os.system("pause")
+        exit(1)
 else:
-    print("登录失败，检查用户名，密码和验证码")
-	os.system("pause")
-    exit(1)
+    print("自动登陆成功，开始计算绩点...")
+
 #获取学分和成绩
+gpapage = ses.get(url2)
 soup=BeautifulSoup(gpapage.text,'lxml')
 trs=soup.find('table',attrs={'id':'table2'}).find_all('tr')
 i=-1
