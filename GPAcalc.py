@@ -13,6 +13,8 @@ imgurl="http://xk.urp.seu.edu.cn/studentService/getCheckCode?now=Tue%20Feb%2013%
 credit=[]                       #记录学分
 scores=[]                       #记录成绩一栏
 scor=[]                         #将成绩换算成对应的绩点
+pscor=[]                        #P值
+enable_P=0                      #计算P值的标识符
 
 username=input("输入一卡通号：")
 password=input("输入统一身份认证密码：")
@@ -40,7 +42,7 @@ for i in range(10):
     img_list = [img1, img2, img3, img4]
     img_num = ["0", "0", "0", "0"]
     for i in range(0, 4):
-        a = pytesseract.image_to_string(img_list[i], lang="eng", config="-psm 10 digits")
+        a = pytesseract.image_to_string(img_list[i], lang="eng", config="--psm 10 digits")
         if re.match('\d', a) and len(a) == 1:
             img_num[i] = a
         elif len(a) > 1 and re.match('\d', a):
@@ -114,31 +116,37 @@ else:
 gpapage = ses.get(url2)
 soup=BeautifulSoup(gpapage.text,'lxml')
 trs=soup.find('table',attrs={'id':'table2'}).find_all('tr')
-i=-1
+i=-1 # 剔除标题
+jump = 0
 for tr in trs:
     n=-1
     tds=tr.find_all('td')
     i+=1
-    if i==0:continue
+    if i==0:continue # 剔除标题
     else:
         for td in tds:
             n+=1
+            if n==0:
+                jump = 0
+            if n==3 and td.string=="不修的课程\xa0": # 剔除不修
+                jump = 1
             if n==4:credit.append(float(td.string))
             if n==5:scores.append(td.string.strip('\xa0'))
-            if n==7 and td.string!=" ":
+            if n==7 and td.string!="\xa0" or jump==1: # 剔除选修
                 credit.pop()
                 scores.pop()
 
 #查询个人信息
 info_data={
     'returnStr':'',
-    'queryStudentId':username,
-    'queryAcademicYear':'17-18-3'
+    'queryStudentId':username
 }
 wb_info=requests.post(info_url,data=info_data).text
 info_soup=BeautifulSoup(wb_info,'html.parser')
 prop=info_soup.find_all('td',attrs={'width':'20%','align':'left'})
 for i in prop:
+    if i.string=="院系:[100202]信息科学与工程学院":
+        enable_P=1
     print(i.string)
 
 #计算绩点
@@ -168,4 +176,16 @@ for i in range(0,len(scores)):
     all_credit=credit[i]+all_credit
 
 print("平均绩点：",gpa/all_credit)
+if enable_P==1:
+    p=0.0
+    for i in range(0,len(scores)):
+        if scores[i]=="优":pscor.append(95)
+        elif scores[i]=="良":pscor.append(85)
+        elif scores[i]=="中":pscor.append(75)
+        elif scores[i]=="通过" or scores[i]=="及格":pscor.append(60)
+        elif scores[i]=="不及格" or scores[i]=="不合格":pscor.append(0)
+        else:pscor.append(float(scores[i]))
+        p=p+pscor[i]*credit[i]
+
+    print("信息学院的P值：",p/all_credit)
 os.system("pause")
