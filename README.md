@@ -14,7 +14,7 @@ automatically log in and calculate GPA for students in southeast university
 
 #### 含验证码识别的版本
 
-推荐使用```GPAcalc.py```脚本运行，需要以下依赖库：
+可以使用```GPAcalc.py```脚本运行，需要以下依赖库：
 - torch
 - torchvision
 - requests
@@ -22,7 +22,7 @@ automatically log in and calculate GPA for students in southeast university
 
 运行的时候需要将此脚本和```jwc_model.pt```放在同一目录下。
 
-也可以直接下载.exe文件运行，不过文件很大，有700MB
+也可以直接下载[GPAcalc.rar](https://github.com/wolverinn/seu_GPACalculator/releases)文件，解压之后在文件夹里找到```GPAcalc.exe```，然后运行。
 
 ## 关于教务处验证码识别
 
