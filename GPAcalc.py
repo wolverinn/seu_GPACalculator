@@ -8,7 +8,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import transforms
-import numpy as np
 
 # 识别验证码的神经网络模型
 class ConvNet(nn.Module):
