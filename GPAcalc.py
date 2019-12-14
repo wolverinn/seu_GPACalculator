@@ -2,8 +2,57 @@ import requests
 import os
 from bs4 import BeautifulSoup
 import re
-import pytesseract
 from PIL import Image
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision import transforms
+import numpy as np
+
+# 识别验证码的神经网络模型
+class ConvNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # (1,100,210)
+        self.conv1=nn.Conv2d(1,10,5,padding=2) # (10,96,200)
+        self.conv2=nn.Conv2d(10,16,3,padding=1) # (16,48,100)
+        self.conv3=nn.Conv2d(16,32,3,padding=1) # (32,24,50)
+        self.fc1 = nn.Linear(32*12*25,1000) # (32,12,25)
+        self.fc2 = nn.Linear(1000,40)
+        self.dropout = nn.Dropout(0.25)
+    def forward(self,x):
+        in_size = x.size(0)
+        out = self.conv1(x)
+        out = F.relu(out)
+        out = F.max_pool2d(out, 2, 2)
+        out = self.conv2(out)
+        out = F.relu(out)
+        out = F.max_pool2d(out,2,2)
+        out = F.relu(self.conv3(out))
+        out = F.max_pool2d(out,2,2)
+        out = out.view(in_size,-1) # 扁平化flat然后传入全连接层
+        out = self.fc1(out)
+        out = F.relu(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+        return out
+
+# 此函数用于调用模型识别验证码
+def recog(model):
+    model.eval()
+    with torch.no_grad():
+        img = Image.open("code.jpg").convert('L')
+        img = img.crop((5,0,205,96))
+        data = transforms.ToTensor()(img).unsqueeze(0)
+        data = data.to('cpu')
+        output = model(data)
+        pred_0 = int(torch.argmax(output[0,0:9]))
+        pred_1 = int(torch.argmax(output[0,10:19]))
+        pred_2 = int(torch.argmax(output[0,20:29]))
+        pred_3 = int(torch.argmax(output[0,30:39]))
+        vercode = str(pred_0) + str(pred_1) + str(pred_2) + str(pred_3)
+        return vercode
 
 url="http://xk.urp.seu.edu.cn/studentService/system/login.action"                                  #登录网址
 url2="http://xk.urp.seu.edu.cn/studentService/cs/stuServe/studentExamResultQuery.action"                   #成绩查询网址
@@ -22,6 +71,10 @@ password=input("输入统一身份认证密码：")
 ses=requests.Session()
 verify_ok="0"
 
+# 加载深度学习模型
+model = ConvNet().to('cpu')
+model.load_state_dict(torch.load('jwc_model.pt',map_location='cpu'))
+
 #尝试自动识别验证码十次
 print("尝试自动登陆中，如自动登陆不成功请手动打开图片输入验证码...")
 for i in range(10):
@@ -33,23 +86,7 @@ for i in range(10):
     f = open('code.jpg', 'wb')
     f.write(image.content)
     f.close()
-    img=Image.open("code.jpg")
-    img = img.convert('L')
-    img1 = img.crop((10, 0, 60, 100))
-    img2 = img.crop((55, 0, 105, 100))
-    img3 = img.crop((102, 0, 152, 100))
-    img4 = img.crop((150, 0, 200, 100))
-    img_list = [img1, img2, img3, img4]
-    img_num = ["0", "0", "0", "0"]
-    for i in range(0, 4):
-        a = pytesseract.image_to_string(img_list[i], lang="eng", config="--psm 10 digits")
-        if re.match('\d', a) and len(a) == 1:
-            img_num[i] = a
-        elif len(a) > 1 and re.match('\d', a):
-            img_num[i] = a[0]
-        else:
-            img_num[i] = "0"
-    vercode = img_num[0] + img_num[1] + img_num[2] + img_num[3]
+    vercode = recog(model)
     data = {
         'userName': username,
         'password': password,
