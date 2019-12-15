@@ -33,5 +33,6 @@ automatically log in and calculate GPA for students in southeast university
 - 没来得及完善的方面：  
 1. 没有界面  
 2. 效率方面还可以改进  
+3. 没有计算出国绩点的功能
 
 其他，欢迎 pull-request...
