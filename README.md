@@ -9,7 +9,7 @@ automatically log in and calculate GPA for students in southeast university
 
 #### 不含验证码识别的版本
 
-1. 下载[GPAcalc_manual.exe](https://github.com/wolverinn/seu_GPACalculator/releases)程序直接运行  
+1. 下载[GPAcalc_manual.exe](https://github.com/wolverinn/seu_GPACalculator/releases/tag/v3.0)程序直接运行  
 2. 下载```GPAcalc_manual.py```脚本，安装requests库和BeautifulSoup库后在python3环境下运行   
 
 #### 含验证码识别的版本
@@ -22,13 +22,13 @@ automatically log in and calculate GPA for students in southeast university
 
 运行的时候需要将此脚本和```jwc_model.pt```放在同一目录下。
 
-也可以直接下载[GPAcalc.rar](https://github.com/wolverinn/seu_GPACalculator/releases)文件，解压之后在文件夹里找到```GPAcalc.exe```，然后运行。
+也可以直接下载[GPAcalc.rar](https://github.com/wolverinn/seu_GPACalculator/releases/tag/v3.0)文件，解压之后在文件夹里找到```GPAcalc.exe```，然后运行。
 
 ## 关于教务处验证码识别
 
-最初尝试的是使用Tesseract OCR 进行识别，但是准确率很低，只有不到30%，后来使用卷积神经网络进行识别，能达到90%的准确率。具体可以参考我的另一个repository：
+最初尝试的是使用Tesseract OCR 进行识别，但是准确率很低，只有不到30%，后来使用卷积神经网络进行识别，能达到90%的准确率。具体可以参考：
 
-[GitHub - wolverinn/SEU-captcha-recognition: recognition of verification code in jwc.seu.edu.cn using CNN implemented with PyTorch](https://github.com/wolverinn/SEU-captcha-recognition)
+[SEU-captcha-recognition: recognition of verification code in jwc.seu.edu.cn using CNN implemented with PyTorch](./SEU-captcha-recognition)
 
 - 没来得及完善的方面：  
 1. 没有界面  
